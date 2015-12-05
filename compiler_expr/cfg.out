@@ -1,0 +1,137 @@
+# Control Flow Graph
+
+a
+
+B0
+{
+	return 1+2*3
+}
+Predecessor: start
+Successor: end
+
+
+main
+
+B0
+{
+	i == 1
+}
+Predecessor: start, B3
+Successor: B1, end
+
+B1
+{
+	x = 2
+	y = 3
+	x = x + 1
+	a ()
+}
+Predecessor: B0
+Successor: B2
+
+B2
+{
+	x = 2
+	i = 0
+}
+Predecessor: B1
+Successor: B3
+
+B3
+{
+	i < 10
+}
+Predecessor: B2, B15
+Successor: B0, B4
+
+B4
+{
+	j == 0
+}
+Predecessor: B3
+Successor: B5, B10
+
+B5
+{
+	x = 2
+}
+Predecessor: B4
+Successor: B6
+
+B6
+{
+	j = x + 1
+}
+Predecessor: B5
+Successor: B7
+
+B7
+{
+	x == 1
+}
+Predecessor: B6, B8
+Successor: B8, B9
+
+B8
+{
+	x = x + 3
+}
+Predecessor: B7
+Successor: B7
+
+B9
+{
+	j = x + 2
+}
+Predecessor: B7
+Successor: B10
+
+B10
+{
+	switch(x)
+}
+Predecessor: B4, B9
+Successor: B11, B12, B13, B14
+
+B11
+{
+	case 2
+	x = 2
+	break
+}
+Predecessor: B10
+Successor: B15
+
+B12
+{
+	case 4
+	x = 3
+}
+Predecessor: B10
+Successor: B13
+
+B13
+{
+	case 5
+	y = 3
+	break
+}
+Predecessor: B10, B12
+Successor: B15
+
+B14
+{
+	default
+	x = 3
+	break
+}
+Predecessor: B10
+Successor: B15
+
+B15
+{
+	i = i + 1
+}
+Predecessor: B11, B13, B14
+Successor: B3
+

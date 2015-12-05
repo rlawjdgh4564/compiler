@@ -108,12 +108,15 @@ void Func(struct FUNCTION *function){
 
    if(function->prev == NULL){
 
-      //create Block
+      //create Block===========================================================
       block = (struct Block *) malloc (sizeof(struct Block));
       initBlock(block);
       block->Block_num = NUM;
       NUM++;
+      block->func_name = (char *) malloc (sizeof(char) * 20);
+      strcat(block->func_name, function->ID);
       insertBlock(block, block_list);
+      //=======================================================================
 
       Type(function->t);
       //fprintf(fp, "%s ", function->ID);
@@ -129,18 +132,19 @@ void Func(struct FUNCTION *function){
       //fprintf(fp, ") ");
       Compound(function->cstmt);
    }
-   else {      
+   else {
       Func(function->prev);
       Type(function->t);
       //fprintf(fp, "%s ", function->ID);
       //fprintf(fp, "(");
-
 
       //create Block===========================================================
       block = (struct Block *) malloc (sizeof(struct Block));
       initBlock(block);
       block->Block_num = NUM;
       NUM++;
+      block->func_name = (char *) malloc (sizeof(char) * 20);
+      strcat(block->func_name, function->ID);
       insertBlock(block, block_list);
       //=======================================================================
 
@@ -375,16 +379,29 @@ char *Assign(struct ASSIGN *assign){
       return;
    }
    if(assign->index == NULL){
-      dst = (char *) malloc(sizeof(char) * 20);
-      str = (char *) malloc(sizeof(char) * 10);
+      dst = (char *) malloc(sizeof(char) * 40);
+      str = (char *) malloc(sizeof(char) * 20);
       strcat(dst, "\t");
       strcat(dst, assign->ID);
       strcat(dst, " = ");
       strcpy(str, Expr(assign->expr));
       strcat(dst, str);
+      strcat(dst , ";");
       return dst;
    }
    else{
+      dst = (char *) malloc(sizeof(char) * 40);
+      str = (char *) malloc(sizeof(char) * 20);
+      strcat(dst, "\t");
+      strcat(dst, assign->ID);
+      strcat(dst, "[");
+      strcat(dst, Expr(assign->index));
+      strcat(dst, "]");   
+      strcat(dst, " = ");
+      strcpy(str, Expr(assign->expr));
+      strcat(dst, str);
+      strcat(dst , ";");
+      return dst;
       //fprintf(fp, "%s", assign->ID);
       //fprintf(fp, "[");
       Expr(assign->index);
@@ -396,7 +413,7 @@ char *Assign(struct ASSIGN *assign){
 }
 
 void AssignStmt(struct ASSIGN *assign){
-   char *str = (char *) malloc(sizeof(char) * 20);
+   char *str = (char *) malloc(sizeof(char) * 40);
    struct Block *block = (struct Block *) malloc (sizeof(struct Block));
    size_t contents_size;
    if(assign == NULL){
@@ -411,11 +428,11 @@ void AssignStmt(struct ASSIGN *assign){
       contents_size = strlen(block->contents);   
    }
    if(contents_size == 0){
-      block->contents = (char *)malloc(sizeof(char) * 20);
+      block->contents = (char *)malloc(sizeof(char) * 40);
       strcat(block->contents, str);
    }
    else{
-      char *str2 = (char *)malloc(sizeof(char) * (20 + contents_size));
+      char *str2 = (char *)malloc(sizeof(char) * (40 + contents_size));
       strcat(str2, block->contents);
       strcat(str2, "\n");
       strcat(str2, str);
@@ -450,13 +467,16 @@ char *Expr(struct EXPR *expr){
          Call(expr->expression.call_);
          break;
       case eIntnum:
-         buffer = (char *) malloc (sizeof(char) * 10);
-         snprintf(buffer, sizeof(char) * 10,"%d",expr->expression.intnum);
+         buffer = (char *) malloc (sizeof(char) * 20);
+         snprintf(buffer, sizeof(char) * 20,"%d",expr->expression.intnum);
          return buffer;
          //fprintf(fp, "%d", expr->expression.intnum);
          break;
       case eFloatnum:
-         //fprintf(fp, "%f", expr->expression.floatnum);
+         buffer = (char *) malloc (sizeof(char) * 20);
+         snprintf(buffer, sizeof(char) * 20,"%f",expr->expression.floatnum);
+         fprintf(fp, "%f", expr->expression.floatnum);
+         return buffer;
          break;
       case eId:
          if(expr->expression.ID_->expr != NULL){
