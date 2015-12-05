@@ -1,0 +1,5 @@
+Function name : wow
+     count      type      name     array      role
+         1       int         a           parameter
+         2     float         b           parameter
+         3       int       ret            variable

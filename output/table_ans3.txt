@@ -1,0 +1,3 @@
+Function name : main
+     count      type      name     array      role
+         1       int         i            variable

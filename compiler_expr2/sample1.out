@@ -1,0 +1,54 @@
+         1       int      val1            variable
+         2       int      val2        10  variable
+         3       int      val3            variable
+         4       int      val4            variable
+         5       int      val5        10  variable
+         6       int      val6        10  variable
+         7       int      val7            variable
+         8     float      val8            variable
+         9       int      val9            variable
+        10     float     val10        10  variable
+        11       int     val11        10  variable
+        12     float     val12        10  variable
+Function name : Val_Decl1
+     count      type      name     array      role
+         1       int      val1            variable
+         2       int      val2        10  variable
+         3       int      val3            variable
+         4       int      val4            variable
+         5       int      val5        10  variable
+         6       int      val6        10  variable
+         7       int      val7            variable
+         8     float      val8            variable
+         9       int      val9            variable
+        10     float     val10        10  variable
+        11       int     val11        10  variable
+        12     float     val12        10  variable
+
+
+Function name : Func_Decl3
+     count      type      name     array      role
+         1     float         a            variable
+
+
+Function name : Iterative_STMT
+     count      type      name     array      role
+         1       int         a            variable
+         2       int         b            variable
+         3       int     index            variable
+
+
+Function name : Iterative_STMT - 5
+     count      type      name     array      role
+         1       int         d            variable
+
+
+Function name : IF_STMT
+     count      type      name     array      role
+         1       int         a            variable
+         2       int         b            variable
+
+
+Function name : Return_Func
+     count      type      name     array      role
+         1       int         b            variable

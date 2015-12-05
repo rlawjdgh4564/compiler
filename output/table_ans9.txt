@@ -1,0 +1,32 @@
+Function name : set_zero_i
+     count      type      name     array      role
+         1       int       num         4 parameter
+         2       int         i            variable
+
+
+Function name : set_zero_f
+     count      type      name     array      role
+         1     float       num         4 parameter
+         2       int         i            variable
+
+
+Function name : main
+     count      type      name     array      role
+         1     float     input       500  variable
+         2     float     means         4  variable
+         3     float new_means         4  variable
+         4       int       num         4  variable
+         5       int         i            variable
+         6       int         j            variable
+         7       int         k            variable
+
+
+Function name : main - FOR(1) - FOR(1)
+     count      type      name     array      role
+         1     float      less            variable
+         2       int       idx            variable
+
+
+Function name : main - FOR(1) - FOR(1) - FOR(1)
+     count      type      name     array      role
+         1     float       tmp            variable

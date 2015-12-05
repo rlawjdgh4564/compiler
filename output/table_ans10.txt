@@ -1,0 +1,8 @@
+Function name : main
+     count      type      name     array      role
+         1       int         i            variable
+
+
+Function name : main - FOR(1) - COMPOUND(1)
+     count      type      name     array      role
+         1       int         a            variable
