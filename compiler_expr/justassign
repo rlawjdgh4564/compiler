@@ -4,10 +4,11 @@ int main(){
 }
 int main2(){
 	a = 2;
-	
-	while( a == 4){
-		b = 4;
-	}
 
-	c = 5;
+	do{
+		b = 6;
+	}while( a == 5);
+
+	c = 6;
+
 }

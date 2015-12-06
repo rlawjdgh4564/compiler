@@ -267,6 +267,12 @@ void Param(struct PARAMETER *param){
 }
 
 void Compound(struct COMPOUNDSTMT *comp){
+
+   struct Block * pred_block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block2 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * tmp = (struct Block *) malloc (sizeof(struct Block));
+
    if(comp == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
@@ -275,8 +281,21 @@ void Compound(struct COMPOUNDSTMT *comp){
    arr[temp]++;
    temp++;
 
-   //fprintf(fp, "{\n");
+   //create Block=====================================================
+   initBlock(block);
+   initBlock(block2);
+   block -> Block_num = NUM;
+   NUM++;
+   block2 -> Block_num = NUM;
+   NUM++;
+   //=================================================================
 
+   pred_block = latest_block(block_list);
+   pre_block(block , pred_block);
+   suc_block(pred_block, block);
+   insertBlock(block, block_list);
+
+   //fprintf(fp, "{\n");
    if(comp->decl == NULL){
       Stmt(comp->stmt);
    }
@@ -286,7 +305,12 @@ void Compound(struct COMPOUNDSTMT *comp){
 
       Decl(comp->decl);
       Stmt(comp->stmt);
-   }   
+   }
+
+   tmp = latest_block(block_list);
+   pre_block(block2 , tmp);
+   suc_block(tmp, block2);
+   insertBlock(block2, block_list);
 
    arr[temp] = 0;
    if(arr[1] == 0){
@@ -463,7 +487,6 @@ char *Assign(struct ASSIGN *assign){
       //fprintf(fp, "= ");
       Expr(assign->expr);
    }
-
 }
 
 void AssignStmt(struct ASSIGN *assign){
@@ -625,28 +648,95 @@ void While_s(struct WHILE_S *while_){
       insertBlock(block3, block_list);
    }
    else{
+
+      pred_block = latest_block(block_list);
+
+      pre_block(block , pred_block);
+      suc_block(pred_block, block);
+      insertBlock(block, block_list);
+
       //fprintf(fp, "do ");
       Stmt(while_->stmt);
+
+      tmp = latest_block(block_list);
+      pre_block(block2 , tmp);
+      suc_block(tmp, block2);
+      insertBlock(block2, block_list);
+
       //fprintf(fp, "while (");
       Expr(while_->cond);
+
+      pre_block(block , block2);
+      suc_block(block2, block);
+      pre_block(block3 , block2);
+      suc_block(block2, block3);
+      insertBlock(block3, block_list);
       //fprintf(fp, ");\n");
    }
 }
 
 void For_s(struct FOR_S *for_){
+   struct Block * pred_block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block1 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block2 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block3 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block4 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * tmp;
+
    if(for_ == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
+   initBlock(block1);
+   initBlock(block2);
+   initBlock(block3);   
+   initBlock(block4);
+   
+   block1 -> Block_num = NUM;
+   NUM++;
+   block2 -> Block_num = NUM;
+   NUM++;
+   block3->Block_num = NUM;
+   NUM++;
+   block4 -> Block_num = NUM;
+   NUM++;
 
    //fprintf(fp, "for (");
-   Assign(for_->init);
+   AssignStmt(for_->init);
    //fprintf(fp, "; ");
+   pred_block = latest_block(block_list);
+
+   pre_block(block1 , pred_block);
+   suc_block(pred_block, block1);
+   insertBlock(block1, block_list);
+
    Expr(for_->cond);
-   //fprintf(fp, "; ");
-   Assign(for_->inc);
-   //fprintf(fp, ") ");
+
+   pre_block(block2, block1);
+   suc_block(block1, block2);
+   insertBlock(block2, block_list);
+
    Stmt(for_->stmt);
+  
+   // block->func_name = (char *) malloc (sizeof(char) * 20);
+   // strcat(block->func_name, function->ID);
+   insertBlock(block3, block_list);
+
+   pre_block(block3, block2);
+   suc_block(block2, block3);
+   // insertBlock(block3, block_list);
+
+   
+   //fprintf(fp, "; ");
+   AssignStmt(for_->inc);
+   //fprintf(fp, ") ");
+   
+   pre_block(block1 , block3);
+   suc_block(block3 , block1);   
+
+   pre_block(block4 , block1);
+   suc_block(block1, block4);
+   insertBlock(block4, block_list);
 }
 
 void If_s(struct IF_S *if_){
