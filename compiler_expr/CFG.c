@@ -32,6 +32,8 @@ int main () {
     
    fclose (fp);
    fclose (fp1);
+   
+   compress(block_list);
    print_block(block_list);
    printf("\n");
    return 0;
@@ -108,6 +110,8 @@ void Func(struct FUNCTION *function){
 
    if(function->prev == NULL){
 
+      NUM = 0;
+
       //create Block===========================================================
       block = (struct Block *) malloc (sizeof(struct Block));
       initBlock(block);
@@ -133,11 +137,14 @@ void Func(struct FUNCTION *function){
       Compound(function->cstmt);
    }
    else {
+
       Func(function->prev);
       Type(function->t);
       //fprintf(fp, "%s ", function->ID);
       //fprintf(fp, "(");
 
+      NUM = 0;
+      
       //create Block===========================================================
       block = (struct Block *) malloc (sizeof(struct Block));
       initBlock(block);
@@ -483,6 +490,10 @@ char *Expr(struct EXPR *expr){
             Id_s(expr->expression.ID_);
          }
          else{
+            buffer = (char *) malloc (sizeof(char) * 20);
+            snprintf(buffer, sizeof(char) * 20,"%s",expr->expression.ID_->ID);
+            fprintf(fp, "%f", expr->expression.floatnum);
+            return buffer; 
             //fprintf(fp,"%s", expr->expression.ID_->ID);
          }
          break;
@@ -551,24 +562,99 @@ void For_s(struct FOR_S *for_){
 }
 
 void If_s(struct IF_S *if_){
+
+   struct Block * pred_block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block2 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block3 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block4 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * tmp = (struct Block *) malloc (sizeof(struct Block));
+
    if(if_ == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
 
    if(if_->else_ == NULL){
+
+      //create Block=====================================================
+      initBlock(block2);
+      initBlock(block3);
+      block2 -> Block_num = NUM;
+      NUM++;
+      block3 -> Block_num = NUM;
+      NUM++;
+      //=================================================================
+
       //fprintf(fp, "if (");
-      Expr(if_->cond);
+
+      Expr(if_->cond); // goto eql or rel
+      
+      pred_block = latest_block(block_list);
+      pre_block(block2 , pred_block);
+      suc_block(pred_block, block2);
+      insertBlock(block2, block_list);
+      
       //fprintf(fp, ") ");
       Stmt(if_->if_);
+
+      tmp = latest_block(block_list);
+      pre_block(block3 , tmp);
+      suc_block(tmp, block3);
+
+      pre_block(block3 , pred_block);
+      suc_block(pred_block, block3);
+      insertBlock(block3, block_list);
+
    }
    else{
+
+      //create Block=====================================================
+      initBlock(block);
+      initBlock(block2);
+      initBlock(block3);
+      initBlock(block4);
+      block -> Block_num = NUM;
+      NUM++;
+      block2 -> Block_num = NUM;
+      NUM++;
+      block3 -> Block_num = NUM;
+      NUM++;
+      block4 -> Block_num = NUM;
+      NUM++;
+      //=================================================================
+
       //fprintf(fp, "if (");
+
+      pred_block = latest_block(block_list);
+
+      pre_block(block , pred_block);
+      suc_block(pred_block, block);
+      insertBlock(block, block_list);
+
       Expr(if_->cond);
+
+      pre_block(block2 , block);
+      suc_block(block, block2);
+      pre_block(block3 , block);
+      suc_block(block, block3);
+      insertBlock(block2, block_list);
+      
       //fprintf(fp, ") ");
       Stmt(if_->if_);
+
+      tmp = latest_block(block_list);
+      pre_block(block4 , tmp);
+      suc_block(tmp, block4);
+      
+      insertBlock(block3, block_list);
       //fprintf(fp, "else ");
       Stmt(if_->else_);
+
+      tmp = latest_block(block_list);
+      pre_block(block4 , tmp);
+      suc_block(tmp, block4);
+      insertBlock(block4, block_list);
    }
 }
 
@@ -688,63 +774,122 @@ void Multop(struct MULTOP *mult){
 }
 
 void Relaop(struct RELAOP *rela){
+   char *str = (char *) malloc(sizeof(char) * 40);
+   struct Block *block = (struct Block *) malloc (sizeof(struct Block));
+   block = latest_block(block_list);
+   size_t contents_size;
+
    if(rela == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");   
       return;
    }
 
+   contents_size = 0;   
+   if(block->contents){
+      contents_size = strlen(block->contents);   
+   }
+
    switch(rela->r){
       case eLT:
-         Expr(rela->lhs);
+         strcat(str, "\t");
+         strcat(str, Expr(rela->lhs));
+         strcat(str, " < ");
+         strcat(str, Expr(rela->rhs));
          //fprintf(fp, " < ");
-         Expr(rela->rhs);
          break;
       case eGT:
-         Expr(rela->lhs);
+         strcat(str, "\t");
+         strcat(str, Expr(rela->lhs));
+         strcat(str, " > ");
+         strcat(str, Expr(rela->rhs));
          //fprintf(fp, " > ");
-         Expr(rela->rhs);
          break;
       case eLE:
-         Expr(rela->lhs);
+         strcat(str, "\t");
+         strcat(str, Expr(rela->lhs));
+         strcat(str, " <= ");
+         strcat(str, Expr(rela->rhs));
          //fprintf(fp, " <= ");
-         Expr(rela->rhs);
          break;
       case eGE:
-         Expr(rela->lhs);
+         strcat(str, "\t");
+         strcat(str, Expr(rela->lhs));
+         strcat(str, " >= ");
+         strcat(str, Expr(rela->rhs));
          //fprintf(fp, " >= ");
-         Expr(rela->rhs);
          break;   
+   }
+   if(contents_size == 0){
+      block->contents = (char *)malloc(sizeof(char) * 40);
+      strcat(block->contents, str);
+   }
+   else{
+      char *str2 = (char *)malloc(sizeof(char) * (40 + contents_size));
+      strcat(str2, block->contents);
+      strcat(str2, "\n");
+      strcat(str2, str);
+      block->contents = str2;
    }
 }
 
 void Eqltop(struct EQLTOP *eqlt){
+   char *str = (char *) malloc(sizeof(char) * 40);
+   struct Block *block = (struct Block *) malloc (sizeof(struct Block));
+   block = latest_block(block_list);
+   size_t contents_size;
+
    if(eqlt == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");   
       return;
    }
 
+   contents_size = 0;   
+   if(block->contents){
+      contents_size = strlen(block->contents);   
+   }
+
    switch(eqlt->e){
       case eEQ:
-         Expr(eqlt->lhs);
+         strcat(str, "\t");
+         strcat(str, Expr(eqlt->lhs));
+         strcat(str, " == ");
+         strcat(str, Expr(eqlt->rhs));
          //fprintf(fp, "== ");
-         Expr(eqlt->rhs);
          break;
       case eNE:
-         Expr(eqlt->lhs);
+         strcat(str, "\t");
+         strcat(str, Expr(eqlt->lhs));
+         strcat(str, " != ");
+         strcat(str, Expr(eqlt->rhs));
+         strcat(str, "\n");
          //fprintf(fp, "!= ");
-         Expr(eqlt->rhs);
          break;   
-   }   
+   }
+   if(contents_size == 0){
+      block->contents = (char *)malloc(sizeof(char) * 40);
+      strcat(block->contents, str);
+   }
+   else{
+      char *str2 = (char *)malloc(sizeof(char) * (40 + contents_size));
+      strcat(str2, block->contents);
+      strcat(str2, "\n");
+      strcat(str2, str);
+      block->contents = str2;
+   }
 }
 
-void Id_s(struct ID_S *id){
+char *Id_s(struct ID_S *id){
+   char *str = (char *) malloc(sizeof(char) * 20);
    if(id == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");   
       return;
    }
-
+   strcat(str, id->ID);
+   strcat(str, "[");
+   strcat(str, Expr(id->expr));
+   strcat(str, "]");
+   return str;
    //fprintf(fp, "%s[", id->ID);
-   Expr(id->expr);
    //fprintf(fp, "]");
 }
 

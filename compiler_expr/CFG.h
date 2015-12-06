@@ -27,7 +27,7 @@ struct PROGRAM *head;
  void Multop(struct MULTOP *mult);
  void Relaop(struct RELAOP *rela);
  void Eqltop(struct EQLTOP *eqlt);
- void Id_s(struct ID_S *id);
+ char *Id_s(struct ID_S *id);
  void Arg(struct ARG *arg);
  void Type(Type_e x);
  void print_func_name(struct FUNCTION* function);
