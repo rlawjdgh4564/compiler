@@ -298,6 +298,10 @@ void Compound(struct COMPOUNDSTMT *comp){
 }
 
 void Stmt(struct STMT *stmt){
+   char *str = (char *) malloc(sizeof(char) * 40);
+   struct Block *block = (struct Block *) malloc (sizeof(struct Block));
+   size_t contents_size;
+
    if(stmt == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
@@ -312,12 +316,34 @@ void Stmt(struct STMT *stmt){
             Call(stmt->stmt.call_);
             break;
          case eRet:
+
             //fprintf(fp, "return ");
             if(stmt->stmt.return_ == NULL){}
             else {
-               Expr(stmt->stmt.return_);
+               strcat(str, "\treturn ");
+               strcat(str, Expr(stmt->stmt.return_));
+               strcat(str, ";");
             }
             //fprintf(fp, ";\n");
+
+            initBlock(block);
+            block = latest_block(block_list);
+            contents_size = 0;   
+            if(block->contents){
+               contents_size = strlen(block->contents);   
+            }
+            if(contents_size == 0){
+               block->contents = (char *)malloc(sizeof(char) * 40);
+               strcat(block->contents, str);
+            }
+            else{
+               char *str2 = (char *)malloc(sizeof(char) * (40 + contents_size));
+               strcat(str2, block->contents);
+               strcat(str2, "\n");
+               strcat(str2, str);
+               block->contents = str2;
+            }
+
             break;
          case eWhile:
             While_s(stmt->stmt.while_);
@@ -352,9 +378,30 @@ void Stmt(struct STMT *stmt){
             //fprintf(fp, "return ");
             if(stmt->stmt.return_ == NULL){}
             else {
-               Expr(stmt->stmt.return_);
+               strcat(str, "\treturn ");
+               strcat(str, Expr(stmt->stmt.return_));
+               strcat(str, ";");
             }
             //fprintf(fp, ";\n");
+
+            initBlock(block);
+            block = latest_block(block_list);
+            contents_size = 0;   
+            if(block->contents){
+               contents_size = strlen(block->contents);   
+            }
+            if(contents_size == 0){
+               block->contents = (char *)malloc(sizeof(char) * 40);
+               strcat(block->contents, str);
+            }
+            else{
+               char *str2 = (char *)malloc(sizeof(char) * (40 + contents_size));
+               strcat(str2, block->contents);
+               strcat(str2, "\n");
+               strcat(str2, str);
+               block->contents = str2;
+            }
+
             break;
          case eWhile:
             While_s(stmt->stmt.while_);
@@ -456,13 +503,17 @@ char *Expr(struct EXPR *expr){
    }
    switch(expr->e){
       case eUnop :
-         Unop(expr->expression.unop_);
+         buffer = (char *) malloc (sizeof(char) * 20);
+         strcat(buffer, Unop(expr->expression.unop_));
+         return buffer;
          break;
       case eAddi:
-         Addiop(expr->expression.addiop_);
+         buffer = (char *) malloc (sizeof(char) * 40);
+         strcat(buffer, Addiop(expr->expression.addiop_));
          break;
       case eMulti:
-         Multop(expr->expression.multop_);
+         buffer = (char *) malloc (sizeof(char) * 40);
+         strcat(buffer, Multop(expr->expression.multop_));
          break;
       case eRela:
          Relaop(expr->expression.relaop_);
@@ -524,17 +575,54 @@ void Call(struct CALL *call){
 }
 
 void While_s(struct WHILE_S *while_){
+   struct Block * pred_block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block2 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block3 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * tmp = (struct Block *) malloc (sizeof(struct Block));
    
    if(while_ == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
+
+   //create Block=====================================================
+   initBlock(block);
+   initBlock(block2);
+   initBlock(block3);
+   block -> Block_num = NUM;
+   NUM++;
+   block2 -> Block_num = NUM;
+   NUM++;
+   block3 -> Block_num = NUM;
+   NUM++;
+   //=================================================================
    
    if(while_->do_while == false){
+
+      pred_block = latest_block(block_list);
+
+      pre_block(block , pred_block);
+      suc_block(pred_block, block);
+      insertBlock(block, block_list);
+
       //fprintf(fp, "while (");
       Expr(while_->cond);
+
+      pre_block(block2 , block);
+      suc_block(block, block2);
+      insertBlock(block2, block_list);
+
       //fprintf(fp, ") ");
       Stmt(while_->stmt);
+
+      tmp = latest_block(block_list);
+      pre_block(block , tmp);
+      suc_block(tmp, block);
+
+      pre_block(block3 , block);
+      suc_block(block, block3);
+      insertBlock(block3, block_list);
    }
    else{
       //fprintf(fp, "do ");
@@ -578,8 +666,11 @@ void If_s(struct IF_S *if_){
    if(if_->else_ == NULL){
 
       //create Block=====================================================
+      initBlock(block);
       initBlock(block2);
       initBlock(block3);
+      block -> Block_num = NUM;
+      NUM++;
       block2 -> Block_num = NUM;
       NUM++;
       block3 -> Block_num = NUM;
@@ -588,11 +679,16 @@ void If_s(struct IF_S *if_){
 
       //fprintf(fp, "if (");
 
+      pred_block = latest_block(block_list);
+
+      pre_block(block , pred_block);
+      suc_block(pred_block, block);
+      insertBlock(block, block_list);
+
       Expr(if_->cond); // goto eql or rel
       
-      pred_block = latest_block(block_list);
-      pre_block(block2 , pred_block);
-      suc_block(pred_block, block2);
+      pre_block(block2 , block);
+      suc_block(block, block2);
       insertBlock(block2, block_list);
       
       //fprintf(fp, ") ");
@@ -602,8 +698,8 @@ void If_s(struct IF_S *if_){
       pre_block(block3 , tmp);
       suc_block(tmp, block3);
 
-      pre_block(block3 , pred_block);
-      suc_block(pred_block, block3);
+      pre_block(block3 , block);
+      suc_block(block, block3);
       insertBlock(block3, block_list);
 
    }
@@ -723,17 +819,22 @@ void Case(struct CASE *case_){
    
 }
 
-void Unop(struct UNOP *unop){
+char *Unop(struct UNOP *unop){
+   char *str = (char *) malloc(sizeof(char) * 20);
    if(unop == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
 
+   strcat(str, "-");
+   strcat(str, Expr(unop->expr));
+   return str;
    //fprintf(fp, "-");
-   Expr(unop->expr);
 }
 
-void Addiop(struct ADDIOP *add){
+char *Addiop(struct ADDIOP *add){
+   char *str = (char *) malloc(sizeof(char) * 40);
+
    if(add == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
@@ -741,19 +842,23 @@ void Addiop(struct ADDIOP *add){
 
    switch(add->a){
       case ePlus:
-         Expr(add->lhs);
+         strcat(str, Expr(add->lhs));
+         strcat(str, " + ");
+         strcat(str, Expr(add->rhs));
          //fprintf(fp, " + ");
-         Expr(add->rhs);
          break;
       case eMinus:
-         Expr(add->lhs);
+         strcat(str, Expr(add->lhs));
+         strcat(str, " - ");
+         strcat(str, Expr(add->rhs));
          //fprintf(fp, " - ");
-         Expr(add->rhs);
          break;   
    }
 }
 
-void Multop(struct MULTOP *mult){
+char *Multop(struct MULTOP *mult){
+   char *str = (char *) malloc(sizeof(char) * 40);
+
    if(mult == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");   
       return;
@@ -761,14 +866,16 @@ void Multop(struct MULTOP *mult){
 
    switch(mult->m){
       case eMult:
-         Expr(mult->lhs);
+         strcat(str, Expr(mult->lhs));
+         strcat(str, " * ");
+         strcat(str, Expr(mult->rhs));
          //fprintf(fp, " * ");
-         Expr(mult->rhs);
          break;
       case eDiv:
-         Expr(mult->lhs);
+         strcat(str, Expr(mult->lhs));
+         strcat(str, " / ");
+         strcat(str, Expr(mult->rhs));
          //fprintf(fp, " / ");
-         Expr(mult->rhs);
          break;   
    }
 }

@@ -98,6 +98,9 @@ void print_block(struct Block_list *list){
       }
       else{
          printf("Predecessor:");
+         if(block2 -> predecessor[0] == NULL){
+            printf(" start");
+         }
          for(i = 0; i < 10; i++){
             if(block2 -> predecessor[i] != NULL){
                if(i != 0)
