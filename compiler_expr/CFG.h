@@ -28,7 +28,7 @@ struct PROGRAM *head;
  void Relaop(struct RELAOP *rela);
  void Eqltop(struct EQLTOP *eqlt);
  char *Id_s(struct ID_S *id);
- void Arg(struct ARG *arg);
+ char *Arg(struct ARG *arg);
  void Type(Type_e x);
  void print_func_name(struct FUNCTION* function);
  void print_func_name2(struct COMPOUNDSTMT *comp);

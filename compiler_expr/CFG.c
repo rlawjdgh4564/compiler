@@ -17,6 +17,7 @@ int temp = 0;
 int start = 0;
 int check = 0;
 
+int compound_check = 0;
 int NUM = 0;
 struct Block_list *block_list;
 
@@ -96,7 +97,6 @@ void Decl(struct DECLARATION *declaration){
       
    }
    //fprintf(fp,";\n");
-
 }
 
 void Func(struct FUNCTION *function){
@@ -134,6 +134,9 @@ void Func(struct FUNCTION *function){
          Param(function->param);
       }
       //fprintf(fp, ") ");
+
+      compound_check = 1;
+   
       Compound(function->cstmt);
    }
    else {
@@ -163,6 +166,9 @@ void Func(struct FUNCTION *function){
          Param(function->param);
       }
       //fprintf(fp, ") ");
+
+      compound_check = 1;
+   
       Compound(function->cstmt);
    }
 }
@@ -232,7 +238,6 @@ void Ident(struct IDENTIFIER *ident){
             //fprintf(fp1, "%10s%10d%10s\n", ident->ID, ident->intnum, "parameter");   
       }
    }
-   
 }
 
 void Param(struct PARAMETER *param){
@@ -273,6 +278,8 @@ void Compound(struct COMPOUNDSTMT *comp){
    struct Block * block2 = (struct Block *) malloc (sizeof(struct Block));
    struct Block * tmp = (struct Block *) malloc (sizeof(struct Block));
 
+   int compound_checkp = 0;
+
    if(comp == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
@@ -281,19 +288,24 @@ void Compound(struct COMPOUNDSTMT *comp){
    arr[temp]++;
    temp++;
 
-   //create Block=====================================================
-   initBlock(block);
-   initBlock(block2);
-   block -> Block_num = NUM;
-   NUM++;
-   block2 -> Block_num = NUM;
-   NUM++;
-   //=================================================================
+   compound_checkp = compound_check;
+   compound_check = 0;
+   // //create Block=====================================================
 
-   pred_block = latest_block(block_list);
-   pre_block(block , pred_block);
-   suc_block(pred_block, block);
-   insertBlock(block, block_list);
+   if(compound_checkp == 0){
+      initBlock(block);
+      initBlock(block2);
+      block -> Block_num = NUM;
+      NUM++;
+      block2 -> Block_num = NUM;
+      NUM++;
+
+      pred_block = latest_block(block_list);
+      pre_block(block , pred_block);
+      suc_block(pred_block, block);
+      insertBlock(block, block_list);
+   }
+   // //=================================================================
 
    //fprintf(fp, "{\n");
    if(comp->decl == NULL){
@@ -307,10 +319,13 @@ void Compound(struct COMPOUNDSTMT *comp){
       Stmt(comp->stmt);
    }
 
-   tmp = latest_block(block_list);
-   pre_block(block2 , tmp);
-   suc_block(tmp, block2);
-   insertBlock(block2, block_list);
+   if(compound_checkp == 0){
+      tmp = latest_block(block_list);
+      pre_block(block2 , tmp);
+      suc_block(tmp, block2);
+      insertBlock(block2, block_list);
+   }
+
 
    arr[temp] = 0;
    if(arr[1] == 0){
@@ -346,7 +361,6 @@ void Stmt(struct STMT *stmt){
             else {
                strcat(str, "\treturn ");
                strcat(str, Expr(stmt->stmt.return_));
-               strcat(str, ";");
             }
             //fprintf(fp, ";\n");
 
@@ -404,7 +418,6 @@ void Stmt(struct STMT *stmt){
             else {
                strcat(str, "\treturn ");
                strcat(str, Expr(stmt->stmt.return_));
-               strcat(str, ";");
             }
             //fprintf(fp, ";\n");
 
@@ -464,7 +477,6 @@ char *Assign(struct ASSIGN *assign){
       strcat(dst, " = ");
       strcpy(str, Expr(assign->expr));
       strcat(dst, str);
-      strcat(dst , ";");
       return dst;
    }
    else{
@@ -478,7 +490,6 @@ char *Assign(struct ASSIGN *assign){
       strcat(dst, " = ");
       strcpy(str, Expr(assign->expr));
       strcat(dst, str);
-      strcat(dst , ";");
       return dst;
       //fprintf(fp, "%s", assign->ID);
       //fprintf(fp, "[");
@@ -582,19 +593,49 @@ char *Expr(struct EXPR *expr){
 }
 
 void Call(struct CALL *call){
+
+   struct Block * block = (struct Block *) malloc (sizeof(struct Block));
+   char * str = (char *) malloc(sizeof(char) * 40);
+   size_t contents_size;
+
    if(call == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
    if(call->arg == NULL){
+      strcat(str, "\t");
+      strcat(str, call->ID);
+      strcat(str, "()");
       //fprintf(fp, "%s()", call->ID);
    }
    else{
+      strcat(str, "\t");
+      strcat(str, call->ID);
+      strcat(str, "(");
       //fprintf(fp, "%s(", call->ID);
-      Arg(call->arg);
+      strcat(str, Arg(call->arg));
+      strcat(str, ")");
       //fprintf(fp, ")");
    }
    //fprintf(fp, ";\n");
+
+   initBlock(block);
+   block = latest_block(block_list);
+   contents_size = 0;   
+   if(block->contents){
+      contents_size = strlen(block->contents);   
+   }
+   if(contents_size == 0){
+      block->contents = (char *)malloc(sizeof(char) * 40);
+      strcat(block->contents, str);
+   }
+   else{
+      char *str2 = (char *)malloc(sizeof(char) * (40 + contents_size));
+      strcat(str2, block->contents);
+      strcat(str2, "\n");
+      strcat(str2, str);
+      block->contents = str2;
+   }
 }
 
 void While_s(struct WHILE_S *while_){
@@ -604,6 +645,8 @@ void While_s(struct WHILE_S *while_){
    struct Block * block3 = (struct Block *) malloc (sizeof(struct Block));
    struct Block * tmp = (struct Block *) malloc (sizeof(struct Block));
    
+   compound_check = 1;
+
    if(while_ == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
@@ -677,53 +720,55 @@ void While_s(struct WHILE_S *while_){
 
 void For_s(struct FOR_S *for_){
    struct Block * pred_block = (struct Block *) malloc (sizeof(struct Block));
-   struct Block * block1 = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block5 = (struct Block *) malloc (sizeof(struct Block));
    struct Block * block2 = (struct Block *) malloc (sizeof(struct Block));
    struct Block * block3 = (struct Block *) malloc (sizeof(struct Block));
    struct Block * block4 = (struct Block *) malloc (sizeof(struct Block));
-   struct Block * tmp;
+   struct Block * tmp = (struct Block *) malloc (sizeof(struct Block));
 
+   compound_check = 1;
+   
    if(for_ == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
-   initBlock(block1);
    initBlock(block2);
    initBlock(block3);   
    initBlock(block4);
+   initBlock(block5);
    
-   block1 -> Block_num = NUM;
-   NUM++;
    block2 -> Block_num = NUM;
    NUM++;
-   block3->Block_num = NUM;
+   block3 -> Block_num = NUM;
    NUM++;
    block4 -> Block_num = NUM;
    NUM++;
-
+   block5 -> Block_num = NUM;
+   NUM++;
    //fprintf(fp, "for (");
    AssignStmt(for_->init);
    //fprintf(fp, "; ");
    pred_block = latest_block(block_list);
 
-   pre_block(block1 , pred_block);
-   suc_block(pred_block, block1);
-   insertBlock(block1, block_list);
+   pre_block(block2 , pred_block);
+   suc_block(pred_block, block2);
+   insertBlock(block2, block_list);
 
    Expr(for_->cond);
 
-   pre_block(block2, block1);
-   suc_block(block1, block2);
-   insertBlock(block2, block_list);
+   pre_block(block3, block2);
+   suc_block(block2, block3);
+   insertBlock(block3, block_list);
 
    Stmt(for_->stmt);
   
    // block->func_name = (char *) malloc (sizeof(char) * 20);
    // strcat(block->func_name, function->ID);
-   insertBlock(block3, block_list);
 
-   pre_block(block3, block2);
-   suc_block(block2, block3);
+   tmp = latest_block(block_list);
+   pre_block(block4, tmp);
+   suc_block(tmp, block4);
+   insertBlock(block4, block_list);
    // insertBlock(block3, block_list);
 
    
@@ -731,12 +776,12 @@ void For_s(struct FOR_S *for_){
    AssignStmt(for_->inc);
    //fprintf(fp, ") ");
    
-   pre_block(block1 , block3);
-   suc_block(block3 , block1);   
+   pre_block(block2 , block4);
+   suc_block(block4 , block2);
 
-   pre_block(block4 , block1);
-   suc_block(block1, block4);
-   insertBlock(block4, block_list);
+   pre_block(block5 , block2);
+   suc_block(block2, block5);
+   insertBlock(block5, block_list);
 }
 
 void If_s(struct IF_S *if_){
@@ -748,6 +793,8 @@ void If_s(struct IF_S *if_){
    struct Block * block4 = (struct Block *) malloc (sizeof(struct Block));
    struct Block * tmp = (struct Block *) malloc (sizeof(struct Block));
 
+   compound_check = 1;
+   
    if(if_ == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
@@ -845,11 +892,34 @@ void If_s(struct IF_S *if_){
 }
 
 void Switch_s(struct SWITCH_S *switch_){
+
+   struct Block * pred_block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block = (struct Block *) malloc (sizeof(struct Block));
+   char *str = (char *) malloc (sizeof(char) * 40);
+
    if(switch_ == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
 
+   compound_check = 1;
+   
+
+   //create Block=====================================================
+   initBlock(block);
+   block -> Block_num = NUM;
+   NUM++;
+   //=================================================================
+
+   pred_block = latest_block(block_list);
+   pre_block(block , pred_block);
+   suc_block(pred_block, block);
+
+   strcat(str, "swithc (");
+   strcat(str, switch_->identifier->ID);
+   strcat(str, ")");
+   block -> contents = (char *) malloc (sizeof(char) * 40);
+   block -> contents = str;
    //fprintf(fp, "switch (");
    switch_->identifier->param = true;
    //fprintf(fp, "%s", switch_->identifier->ID);
@@ -859,10 +929,21 @@ void Switch_s(struct SWITCH_S *switch_){
 }
 
 void Case(struct CASE *case_){
+
+   struct Block * pred_block = (struct Block *) malloc (sizeof(struct Block));
+   struct Block * block = (struct Block *) malloc (sizeof(struct Block));
+   char *str = (char *) malloc (sizeof(char) * 40);
+
    if(case_ == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
+
+   //create Block=====================================================
+   initBlock(block);
+   block -> Block_num = NUM;
+   NUM++;
+   //=================================================================
 
    if(case_->break_ == false){
       if(case_->intnum == 0){
@@ -871,6 +952,16 @@ void Case(struct CASE *case_){
       }
       else if(case_->intnum != 0){
          if(case_->prev == NULL){
+
+            pred_block = latest_block(block_list);
+            pre_block(block , pred_block);
+            suc_block(pred_block, block);
+
+            insertBlock(block);
+            strcat(str, "case ");
+            strcat(str, itoa(case_->intnum));
+            block -> contents = (char *) malloc (sizeof(char) * 40);
+            block -> contents = str;
             //fprintf(fp, "case ");
             //fprintf(fp, "%d:", case_->intnum);
             Stmt(case_->stmt);
@@ -892,6 +983,17 @@ void Case(struct CASE *case_){
       }
       else if(case_->intnum != 0){
          if(case_->prev == NULL){
+
+            pred_block = latest_block(block_list);
+            pre_block(block , pred_block);
+            suc_block(pred_block, block);
+
+            insertBlock(block);
+            strcat(str, "case ");
+            strcat(str, itoa(case_->intnum));
+            block -> contents = (char *) malloc (sizeof(char) * 40);
+            block -> contents = str;
+            
             //fprintf(fp, "case ");
             //fprintf(fp, "%d:", case_->intnum);
             Stmt(case_->stmt);
@@ -906,7 +1008,6 @@ void Case(struct CASE *case_){
          }
       }
    }
-   
 }
 
 char *Unop(struct UNOP *unop){
@@ -1090,20 +1191,25 @@ char *Id_s(struct ID_S *id){
    //fprintf(fp, "]");
 }
 
-void Arg(struct ARG *arg){
+char *Arg(struct ARG *arg){
+   char *str = (char *) malloc(sizeof(char) * 40);
+   char *tmp = (char *) malloc(sizeof(char) * 40);
    if(arg == NULL){
       // //fprintf (stderr, "additive operand does not exist.\n");
       return;
    }
 
    if(arg->prev == NULL){
-      Expr(arg->expr);
+      strcat(tmp, Expr(arg->expr));
+      return tmp;
    }
    else{
-      Arg(arg->prev);
+      strcat(tmp, Arg(arg->prev));
+      strcat(tmp, ", ");
+      strcat(tmp, Expr(arg->expr));
       //fprintf(fp, ", ");
-      Expr(arg->expr);
    }
+   return tmp;
 }
 
 void Type(Type_e x){

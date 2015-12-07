@@ -14,7 +14,7 @@ relaop [\<\>][\=]?
 eqltop [\=\!][\=]
 brac [\(\)\{\}\[\]]
 intnum [0-9]+
-floatnum [0-9]+.[0-9]+
+floatnum [0-9]+[.][0-9]+
 int int
 float float
 for for

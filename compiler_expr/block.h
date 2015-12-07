@@ -2,22 +2,24 @@
 #include "expr.h"
 
 struct Block{
-	int Block_num;
-	char *contents;
+   int Block_num;
+   bool end;
+   char *contents;
    char *func_name;
-	struct Block *predecessor[10];
-	struct Block *successor[10];
-	struct Block *next;
+   struct Block *predecessor[10];
+   struct Block *successor[10];
+   struct Block *next;
 };
 
 struct Block_list{
-	struct Block *head;
-	struct Block *tail;
+   struct Block *head;
+   struct Block *tail;
 };
 
 void initBlock(struct Block * block){
    int i;
    block -> Block_num = 0;
+   block -> end = false;
    block -> contents = NULL;
    block -> func_name = NULL;
    for(i = 0; i < 10; i++){
@@ -46,19 +48,19 @@ void insertBlock(struct Block *inblock, struct Block_list *list){
 }
 
 int Bnum_in_list(struct Block_list *list){
-	int num = 0;
-	struct Block *block;
-	for (block = list->head; block->next != list->tail; block = block->next){
-		num++;
+   int num = 0;
+   struct Block *block;
+   for (block = list->head; block->next != list->tail; block = block->next){
+      num++;
    }
    return num;
 }
 
 struct Block * latest_block(struct Block_list *list){
-	struct Block *block = (struct Block *) malloc (sizeof(struct Block));
-	for (block = list->head; block->next != list->tail; block = block->next){
-	}
-	return block;
+   struct Block *block = (struct Block *) malloc (sizeof(struct Block));
+   for (block = list->head; block->next != list->tail; block = block->next){
+   }
+   return block;
 }
 
 void print_block(struct Block_list *list){
@@ -80,7 +82,7 @@ void print_block(struct Block_list *list){
                break;
             }
          }
-         printf("\nSuccesor:");
+         printf("\nSuccessor:");
          for(i = 0; i < 10; i++){
             if(block2 -> successor[i] != NULL){
                if(i != 0)
@@ -93,6 +95,9 @@ void print_block(struct Block_list *list){
          }
          if(block2 -> successor[0] == NULL){
             printf(" end\n");
+         }
+         else if(block2 -> end == true){
+            printf(", end\n");
          }
          printf("\n\n");
       }
@@ -111,7 +116,7 @@ void print_block(struct Block_list *list){
                break;
             }
          }
-         printf("\nSuccesor:");
+         printf("\nSuccessor:");
          for(i = 0; i < 10; i++){
             if(block2 -> successor[i] != NULL){
                if(i != 0)
@@ -124,6 +129,9 @@ void print_block(struct Block_list *list){
          }
          if(block2 -> successor[0] == NULL){
             printf(" end\n");
+         }
+         else if(block2 -> end == true){
+            printf(", end\n");
          }
          printf("\n\n");
       }
@@ -210,9 +218,13 @@ void compress(struct Block_list *list){
                
             }
             else{
+               if(block2 -> successor[0] == NULL){
+                  block2 -> predecessor[i] -> end = true;
+               }
                for(j = 0; j < 10; j++){
                   if(block2 -> predecessor[i] -> successor[j] == block2){
                      for(k = 0; k < 10; k++){
+
                         if(block2 -> successor[k] != NULL){
                            insert(block2 -> predecessor[i] -> successor, block2 -> successor[k]);
                         }
@@ -231,6 +243,11 @@ void compress(struct Block_list *list){
                
             }
             else{
+               if(block2 -> func_name != NULL){
+                  block2 -> successor[i] -> func_name = (char *)malloc(strlen(block2 -> func_name)+1);
+                  strcpy(block2 -> successor[i] -> func_name, block2 -> func_name);
+               }
+
                for(j = 0; j < 10; j++){
                   if(block2 -> successor[i] -> predecessor[j] == block2){
                      for(k = 0; k < 10; k++){
@@ -253,5 +270,4 @@ void compress(struct Block_list *list){
          block = block -> next;
       }
    }
-
 }
